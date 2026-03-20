@@ -305,7 +305,6 @@
     if (running) return;
     selectedMinutes = mins; totalSeconds = mins * 60; remaining = totalSeconds;
     updateDisplay(); updateProgress();
-    document.getElementById('timer-label').textContent = mins + ' Minute Timer';
     document.querySelectorAll('.timer-pill').forEach(p => p.classList.remove('active'));
     document.getElementById('pill-' + mins).classList.add('active');
   }
