@@ -97,6 +97,12 @@
     50% { opacity: 0.5; }
   }
 
+  .digit {
+    display: inline-block;
+    width: 1ch;
+    text-align: center;
+  }
+
   .sep {
     display: inline-block;
     animation: blink 1s step-end infinite;
@@ -269,9 +275,9 @@
 </div>
 
 <div class="timer-wrap">
-  <div class="label" id="timer-label">10 Minute Timer</div>
+  <div class="label" id="timer-label">Next Pickup Arriving in</div>
   <div class="time-display" id="display">
-    <span id="mins">10</span><span class="sep" id="sep">:</span><span id="secs">00</span>
+    <span class="digit" id="d0"></span><span class="digit" id="d1"></span><span class="sep" id="sep">:</span><span class="digit" id="d2"></span><span class="digit" id="d3"></span>
   </div>
   <div class="progress-bar">
     <div class="progress-fill" id="progress"></div>
@@ -338,8 +344,12 @@
   }
 
   function updateDisplay() {
-    document.getElementById('mins').textContent = String(Math.floor(remaining/60)).padStart(2,'0');
-    document.getElementById('secs').textContent = String(remaining%60).padStart(2,'0');
+    const m = String(Math.floor(remaining/60)).padStart(2,'0');
+    const s = String(remaining%60).padStart(2,'0');
+    document.getElementById('d0').textContent = m[0];
+    document.getElementById('d1').textContent = m[1];
+    document.getElementById('d2').textContent = s[0];
+    document.getElementById('d3').textContent = s[1];
   }
 
   function updateProgress() {
