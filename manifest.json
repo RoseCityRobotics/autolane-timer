@@ -1,0 +1,17 @@
+{
+  "name": "Autolane Timer",
+  "short_name": "Timer",
+  "description": "Next pickup arriving countdown timer",
+  "start_url": "/autolane-timer/",
+  "display": "standalone",
+  "background_color": "#FFFBF4",
+  "theme_color": "#027F83",
+  "orientation": "landscape",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23027F83' rx='32'/><text x='50%25' y='58%25' dominant-baseline='middle' text-anchor='middle' font-size='120' font-family='Impact,sans-serif' fill='white'>T</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

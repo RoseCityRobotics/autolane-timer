@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Autolane Timer</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Autolane Timer">
+<meta name="theme-color" content="#027F83">
 <style>
   @font-face {
     font-family: 'Bureau Grot';
@@ -361,6 +366,10 @@
   }
 
   updateDisplay();
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/autolane-timer/sw.js');
+  }
 </script>
 </body>
 </html>
