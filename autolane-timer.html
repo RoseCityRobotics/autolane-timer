@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Autolane Timer</title>
+<style>
+  @font-face {
+    font-family: 'Bureau Grot';
+    src: url('https://cdn.prod.website-files.com/6744cfc4e508ac28c650507d/67960a3e9f33ccbf2391ddb1_font.woff') format('woff');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #FFFBF4;
+    --teal: #027F83;
+    --teal-light: #D9EDF0;
+    --teal-dark: #015f63;
+    --text: #221F1F;
+    --text-muted: rgba(34,31,31,0.4);
+    --border: rgba(34,31,31,0.12);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .bg-shape {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    preserveAspectRatio: xMidYMid slice;
+  }
+
+  .logo {
+    position: fixed;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  .logo img { height: 32px; }
+
+  .timer-wrap {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+  }
+
+  .time-display {
+    font-size: clamp(120px, 22vw, 200px);
+    font-family: 'Bureau Grot', Impact, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+    transition: color 0.4s ease;
+  }
+
+  .time-display.warning { color: #9a4e00; }
+
+  .time-display.urgent {
+    color: #c0321a;
+    animation: pulse 0.9s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .digit {
+    display: inline-block;
+    width: 1ch;
+    text-align: center;
+  }
+
+  .sep {
+    display: inline-block;
+    animation: blink 1s step-end infinite;
+  }
+  .sep.paused { animation: none; opacity: 1; }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.1; }
+  }
+
+  .progress-bar {
+    width: 340px;
+    height: 3px;
+    background: rgba(17,17,17,0.1);
+    border-radius: 99px;
+    margin: 28px auto 0;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 99px;
+    width: 100%;
+    transition: width 1s linear;
+  }
+
+  .controls {
+    margin-top: 40px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .btn {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 12px 28px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover {
+    border-color: rgba(17,17,17,0.35);
+    background: rgba(17,17,17,0.05);
+  }
+
+  .btn.primary {
+    background: var(--teal);
+    color: #fff;
+    border-color: var(--teal);
+  }
+
+  .btn.primary:hover {
+    background: var(--teal-dark);
+    border-color: var(--teal-dark);
+  }
+
+  .btn.running {
+    background: var(--teal-light);
+    color: var(--teal-dark);
+    border-color: var(--teal-light);
+  }
+
+  .timer-select {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 2;
+  }
+
+  .timer-pill {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--text-muted);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    padding: 9px 22px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .timer-pill:hover {
+    border-color: rgba(17,17,17,0.3);
+    color: var(--text);
+  }
+
+  .timer-pill.active {
+    background: var(--teal);
+    color: #fff;
+    border-color: var(--teal);
+  }
+
+  .done-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--teal);
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 10;
+    cursor: pointer;
+  }
+
+  .done-overlay.show { display: flex; }
+
+  .done-text {
+    font-size: 56px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #fff;
+    animation: fadeUp 0.5s ease;
+  }
+
+  .done-sub {
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    animation: fadeUp 0.5s ease 0.1s both;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<svg class="bg-shape" viewBox="0 0 1656 679" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+<path d="M1614 289.5V332.5H230V289.5H1614Z" fill="#DBEDF1" stroke="#D9EDF0"/>
+<path d="M183 301.23C178.116 301.231 174.149 305.16 174.149 310.015C174.15 314.869 178.116 318.799 183 318.799C187.884 318.799 191.851 314.869 191.852 310.015C191.852 305.16 187.884 301.23 183 301.23ZM161.998 323.907C161.973 317.183 161.991 310.46 161.991 303.732C161.991 298.504 161.992 293.277 161.993 288.05C161.994 282.822 161.994 277.595 161.994 272.366V260.647C161.997 253.74 162.632 246.504 160.974 239.573C159.287 232.523 155.322 225.96 150.19 220.868C143.029 213.762 132.964 209.347 121.936 209.347C119.831 209.347 117.727 209.519 115.652 209.854H115.651C109.842 210.794 104.278 213.042 99.4336 216.345C94.6154 219.628 90.5164 223.944 87.5352 228.938C84.1884 234.546 82.3823 240.895 82.0352 247.38C81.6818 253.934 82.8025 260.556 85.2725 266.641C87.7301 272.697 91.546 278.226 96.4971 282.557C101.14 286.619 106.476 288.423 112.051 289.315C117.251 290.147 122.735 290.193 128.041 290.521L129.1 290.592C129.83 290.644 133.845 290.653 137.945 290.609C141.55 290.571 145.296 290.493 146.984 290.361C146.983 290.678 146.982 291.124 146.98 291.682C146.977 292.871 146.971 294.57 146.965 296.607C146.952 300.683 146.935 306.114 146.918 311.545C146.901 316.976 146.883 322.406 146.87 326.479C146.864 328.515 146.858 330.212 146.854 331.399C146.853 331.993 146.851 332.459 146.85 332.777C146.849 332.819 146.849 332.859 146.849 332.896C132.889 334.19 119.317 334.321 107.131 331.845C94.1935 329.213 81.4401 324.358 71.0566 316.125C48.0955 297.923 37.6245 269.613 40.4521 240.875C43.0827 214.126 59.2329 190.52 82.8018 177.488C94.3875 171.081 107.686 167.5 121.933 167.5C136.179 167.5 149.479 171.083 161.256 177.489L161.258 177.491C185.756 190.676 202.659 216.103 203.805 245.297V245.298L203.997 469.5H161.998V323.907Z" fill="#DBEDF1" stroke="#D9EDF0"/>
+<path d="M354.689 40.501H354.69C355.787 40.5041 356.874 40.5572 357.961 40.6299L357.978 40.6309H359.221L359.212 40.7266C385.017 43.1124 405.162 64.883 404.999 91.2852C404.889 109.147 404.802 220.953 404.742 328.289C404.712 381.958 404.689 434.511 404.674 473.646C404.666 493.214 404.659 509.428 404.655 520.749C404.653 526.41 404.652 530.848 404.651 533.87C404.651 535.381 404.651 536.539 404.65 537.318C404.65 537.593 404.649 537.82 404.649 538H363.384L363.349 102.865C363.349 96.947 362.353 92.0974 360.488 88.6123C358.616 85.1135 355.852 82.9728 352.362 82.5674L352.333 82.5635H352.304L0.5 82.6641V40.7314L350.691 40.6309H350.707L350.723 40.6299C352.04 40.5478 353.358 40.4947 354.689 40.501Z" fill="#D9EDF0" stroke="#D9EDF0"/>
+<path d="M1337.6 496.657L1331.94 490.997H1297.65V229.783C1297.65 211.859 1304.62 194.987 1317.27 182.311V182.31C1329.93 169.632 1346.77 162.644 1364.67 162.644H1462.12C1474.44 162.643 1484.48 152.594 1484.48 140.229C1484.48 127.865 1474.44 117.816 1462.12 117.815H1315.31V117.814C1283.97 117.82 1258.5 92.2848 1258.5 60.9092C1258.5 29.533 1283.97 4 1315.31 4H1651.5V44.0137H1315.31C1306.02 44.0137 1298.45 51.5891 1298.45 60.9092C1298.45 70.2293 1306.02 77.8047 1315.31 77.8047H1462.13C1496.5 77.8049 1524.44 105.812 1524.44 140.232C1524.44 174.653 1496.5 202.66 1462.13 202.66H1364.67C1349.76 202.66 1337.6 214.824 1337.6 229.786V496.657Z" fill="#D9EDF0" stroke="#D9EDF0" stroke-width="8"/>
+<path d="M214.251 575.5H474.5V534.859H214.251C208.854 534.859 204.448 530.689 204.448 525.582L204.5 450H161.552L161.5 525.582C161.5 553.112 185.159 575.5 214.251 575.5Z" fill="#D9EDF0"/>
+<path d="M470.5 575.5L663.733 575.5L663.733 602L712.5 553.073L663.114 505L663.114 535L470.5 535L470.5 575.5Z" fill="#D9EDF0"/>
+<path d="M1293.64 397L1293.64 622.172L1262.5 622.172L1320 679L1376.5 621.451L1341.61 621.451L1341.61 397L1293.64 397Z" fill="#D9EDF0"/>
+</svg>
+
+
+
+<div class="logo">
+  <svg xmlns="http://www.w3.org/2000/svg" width="160" style="color: #111111;" viewBox="0 0 116 19" fill="none">
+    <path d="M60.7814 11.2781V0.186218H56.7418V11.2773C56.7418 14.1985 58.3759 16.7428 60.7814 18.0684C61.8768 18.6594 63.1515 19 64.4797 19H64.821V14.9503C64.7132 14.9683 64.6055 14.9683 64.4797 14.9683C62.4327 14.9683 60.7814 13.3202 60.7814 11.2773V11.2781Z" fill="currentColor"></path>
+    <path d="M33.2964 0H29.2749V11.0197C29.2749 13.9408 30.8909 16.4672 33.2964 17.7747C34.3918 18.3656 35.6303 18.7062 36.9766 18.7062C37.0843 18.7062 37.1921 18.7062 37.2998 18.6882V14.6746C37.1921 14.6927 37.0843 14.6927 36.9766 14.6927C34.9297 14.6927 33.2964 13.0445 33.2964 11.0197V8.0091H37.2998V4.01358H33.2964V0Z" fill="currentColor"></path>
+    <path d="M50.4785 3.88804C49.383 3.31432 48.1264 2.99176 46.7982 2.99176C45.4701 2.99176 44.2126 3.31432 43.118 3.88804C40.7125 5.14219 39.0965 7.561 39.0965 10.3566V11.3242C39.0965 14.1198 40.7125 16.5567 43.118 17.8108C44.2134 18.3845 45.452 18.7071 46.7982 18.7071C48.1445 18.7071 49.3838 18.3845 50.4785 17.8108C52.8667 16.5567 54.4819 14.1198 54.4819 11.3242V10.3566C54.4819 7.561 52.8659 5.14219 50.4785 3.88804ZM50.4785 11.3242C50.4785 12.2919 50.0656 13.1874 49.4011 13.8153C48.7366 14.4604 47.8032 14.8544 46.7974 14.8544C44.7505 14.8544 43.1172 13.2777 43.1172 11.3242V10.3566C43.1172 8.42117 44.7513 6.82641 46.7974 6.82641C47.8032 6.82641 48.7366 7.22038 49.4011 7.86551C50.0656 8.51064 50.4785 9.38886 50.4785 10.3557V11.3234V11.3242Z" fill="currentColor"></path>
+    <path d="M77.0678 3.88781C75.9542 3.27879 74.6976 2.93817 73.3514 2.93817C72.0051 2.93817 70.7485 3.27879 69.653 3.88781C67.2475 5.19612 65.6134 7.74051 65.6134 10.6789V11.0195C65.6134 13.9406 67.2475 16.485 69.653 17.8106C70.7485 18.4015 72.0232 18.7422 73.3514 18.7422C74.6795 18.7422 75.9542 18.4015 77.0678 17.8106V18.7422H81.1074V10.3383H81.0893C80.9816 7.56076 79.3836 5.14195 77.0678 3.88781ZM77.0678 11.3421H77.0497C76.96 12.2383 76.5653 13.0263 75.9723 13.6181C75.3078 14.2993 74.3744 14.7113 73.3514 14.7113C71.3044 14.7113 69.653 13.0632 69.653 11.0203V10.6797C69.653 8.6368 71.3044 6.98869 73.3514 6.98869C74.3744 6.98869 75.3087 7.40071 75.9723 8.0639C76.5653 8.65485 76.96 9.46168 77.0497 10.3399H77.0678V11.3437V11.3421Z" fill="currentColor"></path>
+    <path d="M94.2853 3.94201C93.2442 3.36829 92.041 3.04573 90.7844 3.01044H90.425C89.1503 3.04655 87.9652 3.36911 86.924 3.94201C84.5185 5.25033 82.9025 7.77667 82.9025 10.6789V18.7061H86.924V10.6789C86.924 8.77965 88.3961 7.20295 90.2638 7.0232H90.5155C90.5335 7.00514 90.5697 7.00514 90.6051 7.00514C90.6232 7.00514 90.6594 7.00514 90.6947 7.0232H90.9283C92.8132 7.20212 94.2853 8.77883 94.2853 10.6789V18.7061H98.2887V10.6789C98.2887 7.77585 96.6727 5.24951 94.2853 3.94201Z" fill="currentColor"></path>
+    <path d="M111.728 12.9674C111.548 13.308 111.315 13.6125 111.046 13.8637C110.381 14.5088 109.448 14.9028 108.424 14.9028C107.706 14.9028 107.042 14.7058 106.485 14.3652L112.14 10.5305L115.785 8.05752C115.391 6.9109 114.708 5.88904 113.811 5.06498C113.308 4.59878 112.751 4.20481 112.14 3.88225C111.027 3.30853 109.77 2.98596 108.424 2.98596C107.078 2.98596 105.82 3.30853 104.726 3.88225C102.32 5.13639 100.686 7.57326 100.686 10.3869V11.3546C100.686 12.1786 100.83 12.9493 101.081 13.6839C101.476 14.8305 102.158 15.8696 103.055 16.6945C103.558 17.1607 104.115 17.5547 104.725 17.8772C105.82 18.451 107.095 18.7735 108.423 18.7735C109.751 18.7735 111.027 18.451 112.14 17.8772C114.061 16.8562 115.497 15.0817 116 12.9674H111.727H111.728ZM104.726 10.3869C104.726 8.43343 106.378 6.83949 108.424 6.83949C109.143 6.83949 109.825 7.03648 110.381 7.3771L104.726 11.2117V10.3877V10.3869Z" fill="currentColor"></path>
+    <path d="M23.0543 11.0412C23.0543 11.7774 22.8298 12.5055 22.4128 13.1128C22.0049 13.7079 21.4218 14.1765 20.7516 14.4458C19.9522 14.7667 19.0303 14.825 18.2243 14.4966C16.6347 13.8482 15.5968 12.0992 15.4849 10.433C15.4241 9.52769 15.2835 8.66424 14.9438 7.81638C14.2933 6.19371 13.0835 4.81563 11.5564 3.96121C11.5259 3.94397 11.4955 3.92756 11.4642 3.91032C10.3515 3.30049 9.0941 2.96069 7.74784 2.96069C6.40157 2.96069 5.14413 3.30049 4.04952 3.91032C1.05435 5.57813 -0.427609 8.91129 0.107771 12.2658C0.480317 14.596 1.96474 16.7078 4.0487 17.8331C6.33907 19.07 9.1714 19.0528 11.4634 17.8331C11.9067 17.5926 12.6551 17.0246 12.6551 17.0246L12.47 16.7045C12.2562 16.3179 11.8705 15.6564 11.5169 15.0564L10.7866 13.7941C10.7866 13.7941 8.96745 14.9883 6.77412 14.5787C5.71405 14.3809 4.90152 13.4855 4.44509 12.5194C4.12929 11.8505 3.99688 11.1003 4.06514 10.3632C4.23867 8.48449 5.85468 7.01038 7.74701 7.01038C8.77007 7.01038 9.70432 7.42241 10.368 8.08477C11.5259 9.24042 11.5539 10.9993 11.8458 12.5063C12.1608 14.1355 12.989 15.6613 14.2398 16.7759C14.6815 17.1691 15.1708 17.5187 15.693 17.7978C17.9826 19.0199 20.7656 19.0191 23.0543 17.7978C25.4417 16.4895 27.0577 13.9631 27.0577 11.0428V2.93524H23.0543V11.0412ZM10.6139 16.4345C10.6139 16.8867 10.2463 17.2536 9.79314 17.2536C9.34 17.2536 8.97238 16.8867 8.97238 16.4345C8.97238 15.9822 9.34 15.6154 9.79314 15.6154C10.2463 15.6154 10.6139 15.9822 10.6139 16.4345ZM25.0864 4.17297C25.5396 4.17297 25.9072 4.53985 25.9072 4.9921C25.9072 5.44434 25.5396 5.81123 25.0864 5.81123C24.6333 5.81123 24.2657 5.44434 24.2657 4.9921C24.2657 4.53985 24.6333 4.17297 25.0864 4.17297Z" fill="currentColor"></path>
+  </svg>
+</div>
+
+<div class="timer-wrap">
+  <div class="label" id="timer-label">Next Pickup Arriving in</div>
+  <div class="time-display" id="display">
+    <span class="digit" id="d0"></span><span class="digit" id="d1"></span><span class="sep" id="sep">:</span><span class="digit" id="d2"></span><span class="digit" id="d3"></span>
+  </div>
+  <div class="progress-bar">
+    <div class="progress-fill" id="progress"></div>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="resetTimer()">Reset</button>
+    <button class="btn primary" id="start-btn" onclick="toggleTimer()">Start</button>
+  </div>
+</div>
+
+<div class="timer-select">
+  <button class="timer-pill active" id="pill-10" onclick="setTimer(10)">10 min</button>
+  <button class="timer-pill" id="pill-15" onclick="setTimer(15)">15 min</button>
+</div>
+
+<div class="done-overlay" id="done-overlay" onclick="resetTimer()">
+  <div class="done-text">Time's Up</div>
+  <div class="done-sub">Tap anywhere to reset</div>
+</div>
+
+<script>
+  let totalSeconds = 600, remaining = 600, interval = null, running = false, selectedMinutes = 10;
+
+  function setTimer(mins) {
+    if (running) return;
+    selectedMinutes = mins; totalSeconds = mins * 60; remaining = totalSeconds;
+    updateDisplay(); updateProgress();
+    document.querySelectorAll('.timer-pill').forEach(p => p.classList.remove('active'));
+    document.getElementById('pill-' + mins).classList.add('active');
+  }
+
+  function toggleTimer() { running ? pauseTimer() : startTimer(); }
+
+  function startTimer() {
+    if (remaining <= 0) return;
+    running = true;
+    const btn = document.getElementById('start-btn');
+    btn.textContent = 'Pause'; btn.className = 'btn running';
+    document.getElementById('sep').classList.remove('paused');
+    interval = setInterval(tick, 1000);
+  }
+
+  function pauseTimer() {
+    running = false; clearInterval(interval);
+    const btn = document.getElementById('start-btn');
+    btn.textContent = 'Resume'; btn.className = 'btn primary';
+    document.getElementById('sep').classList.add('paused');
+  }
+
+  function resetTimer() {
+    running = false; clearInterval(interval); remaining = totalSeconds;
+    const btn = document.getElementById('start-btn');
+    btn.textContent = 'Start'; btn.className = 'btn primary';
+    document.getElementById('sep').classList.remove('paused');
+    document.getElementById('display').className = 'time-display';
+    document.getElementById('done-overlay').classList.remove('show');
+    updateDisplay(); updateProgress();
+  }
+
+  function tick() {
+    remaining--; updateDisplay(); updateProgress(); updateWarning();
+    if (remaining <= 0) { clearInterval(interval); running = false; document.getElementById('done-overlay').classList.add('show'); }
+  }
+
+  function updateDisplay() {
+    const m = String(Math.floor(remaining/60)).padStart(2,'0');
+    const s = String(remaining%60).padStart(2,'0');
+    document.getElementById('d0').textContent = m[0];
+    document.getElementById('d1').textContent = m[1];
+    document.getElementById('d2').textContent = s[0];
+    document.getElementById('d3').textContent = s[1];
+  }
+
+  function updateProgress() {
+    document.getElementById('progress').style.width = (remaining/totalSeconds*100)+'%';
+  }
+
+  function updateWarning() {
+    const el = document.getElementById('display'), pct = remaining/totalSeconds;
+    if (remaining <= 30) el.className = 'time-display urgent';
+    else if (pct <= 0.2) el.className = 'time-display warning';
+    else el.className = 'time-display';
+  }
+
+  updateDisplay();
+</script>
+</body>
+</html>
