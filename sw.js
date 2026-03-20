@@ -3,6 +3,8 @@ const ASSETS = [
   '/autolane-timer/',
   '/autolane-timer/index.html',
   '/autolane-timer/manifest.json',
+  '/autolane-timer/icon-192.png',
+  '/autolane-timer/icon-512.png',
   'https://cdn.prod.website-files.com/6744cfc4e508ac28c650507d/67960a3e9f33ccbf2391ddb1_font.woff'
 ];
 
