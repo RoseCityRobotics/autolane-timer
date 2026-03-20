@@ -1,4 +1,4 @@
-const CACHE = 'autolane-timer-v1';
+const CACHE = 'autolane-timer-v2';
 const ASSETS = [
   '/autolane-timer/',
   '/autolane-timer/index.html',
